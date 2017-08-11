@@ -6,6 +6,8 @@ import sys, getopt, time, glob, math, pdb, numpy
 
 from mtdef import MID, MTException, Baudrates, XDIGroup, getName, getMIDName, XDIMessage, XDIProductMask
 
+import rospy
+
 # Verbose flag for debugging
 verbose = False
 
@@ -16,7 +18,7 @@ verbose = False
 class MTDevice(object):
 	"""Xsens MT device communication object."""
 
-	def __init__(self, port, baudrate=115200, timeout=0.1, autoconf=True,
+	def __init__(self, port, baudrate=115200, timeout=0.1, autoconf=False,
 			config_mode=False):
 		"""Open device."""
 		self.device = serial.Serial(port, baudrate, timeout=timeout,
@@ -553,7 +555,8 @@ class MTDevice(object):
 		if mid==MID.MTData2:
 			return self.parse_MTData2(data)
 		else:
-			raise MTException("Only MTData2 supported, use -f and -m to configure MTi.\n unknown data message: mid=0x%02X (%s)."%	(mid, getMIDName(mid)))
+			# raise MTException("Only MTData2 supported, use -f and -m to configure MTi.\n unknown data message: mid=0x%02X (%s)."%	(mid, getMIDName(mid)))
+			rospy.logwarn("Only MTData2 supported, use -f and -m to configure MTi.\n unknown data message: mid=0x%02X (%s)."%	(mid, getMIDName(mid)))
 
 	## Parse a new MTData2 message
 	def parse_MTData2(self, data):

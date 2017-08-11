@@ -55,6 +55,7 @@ add_message_files(
    orientationEstimate.msg
    velocityEstimate.msg
    positionEstimate.msg		   
+   PacketCounter.msg
  )
 
 ## Generate services in the 'srv' folder

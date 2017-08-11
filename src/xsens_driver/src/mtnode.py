@@ -13,6 +13,7 @@ from gps_common.msg import GPSFix, GPSStatus
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 from custom_msgs.msg import sensorSample, baroSample, gnssSample
 from custom_msgs.msg import positionEstimate, velocityEstimate, orientationEstimate
+from custom_msgs.msg import PacketCounter
 
 # transform Euler angles or matrix into quaternions
 from math import pi, radians
@@ -91,6 +92,7 @@ class XSensDriver(object):
 				message='No status information')
 		self.diag_msg.status = [self.stest_stat, self.xkf_stat, self.gps_stat]
 
+		self.packet_counter_pub = rospy.Publisher('mti/sensor/packet_counter', PacketCounter, queue_size=10) #IMU message
 		self.imu_pub = rospy.Publisher('mti/sensor/imu', Imu, queue_size=10) #IMU message
 		self.ss_pub = rospy.Publisher('mti/sensor/sample', sensorSample, queue_size=10) # sensorSample
 		self.mag_pub = rospy.Publisher('mti/sensor/magnetic', Vector3Stamped, queue_size=10) # magnetic
@@ -127,6 +129,8 @@ class XSensDriver(object):
 		
 		# get data
 		data = self.mt.read_measurement()
+		if data is None:
+			return
 		# common header
 		h = Header()
 		h.stamp = rospy.Time.now()
@@ -147,6 +151,9 @@ class XSensDriver(object):
 		status = data.get('Status')	# int
 
 		# create messages and default values
+		"PacketCounter message"
+		packet_counter_msg = PacketCounter()
+		pub_packet_counter = False
 		"Imu message supported with Modes 1 & 2"
 		imu_msg = Imu()
 		pub_imu = False
@@ -178,16 +185,29 @@ class XSensDriver(object):
 		
 		secs = 0
 		nsecs = 0
-		
+		has_sample_time = False
+		packet_counter = 0
+
 		if time_data:
 			# first getting the sampleTimeFine
-			time = time_data['SampleTimeFine']
-			secs = 100e-6*time
-			nsecs = 1e5*time - 1e9*math.floor(secs)							
+			try:
+				time = time_data['SampleTimeFine']
+				secs = 100e-6*time
+				nsecs = 1e5*time - 1e9*math.floor(secs)
+				has_sample_time = True
+			except KeyError:
+				pass
+
+			try:
+				packet_counter_msg.counter = time_data['PacketCounter']
+				pub_packet_counter = True
+			except KeyError:
+				pass
+
 		
 		if acc_data:
 			if 'Delta v.x' in acc_data: # found delta-v's
-				pub_ss = True
+				Pub_ss = True
 				ss_msg.internal.imu.dv.x = acc_data['Delta v.x']
 				ss_msg.internal.imu.dv.y = acc_data['Delta v.y']
 				ss_msg.internal.imu.dv.z = acc_data['Delta v.z']											
@@ -302,12 +322,15 @@ class XSensDriver(object):
 
 		
 		# publish available information
+		if pub_packet_counter:
+			packet_counter_msg.header = h
+			self.packet_counter_pub.publish(packet_counter_msg)
 		if pub_imu:
 			imu_msg.header = h
 			#all time assignments (overwriting ROS time)
 			# Comment the two lines below if you need ROS time
-			imu_msg.header.stamp.secs = secs
-			imu_msg.header.stamp.nsecs = nsecs	
+			# imu_msg.header.stamp.secs = secs
+			# imu_msg.header.stamp.nsecs = nsecs	
 			self.imu_pub.publish(imu_msg)
 		#if pub_gps:
 		#	xgps_msg.header = gps_msg.header = h
@@ -322,43 +345,43 @@ class XSensDriver(object):
 			ss_msg.header = h
 			#all time assignments (overwriting ROS time)
 			# Comment the two lines below if you need ROS time
-			ss_msg.header.stamp.secs = secs
-			ss_msg.header.stamp.nsecs = nsecs	
+			# ss_msg.header.stamp.secs = secs
+			# ss_msg.header.stamp.nsecs = nsecs	
 			self.ss_pub.publish(ss_msg)
 		if pub_baro:
 			baro_msg.header = h
 			#all time assignments (overwriting ROS time)
 			# Comment the two lines below if you need ROS time
-			baro_msg.header.stamp.secs = secs
-			baro_msg.header.stamp.nsecs = nsecs	
+			# baro_msg.header.stamp.secs = secs
+			# baro_msg.header.stamp.nsecs = nsecs	
 			self.baro_pub.publish(baro_msg)
 		if pub_gnssPvt:
 			gnssPvt_msg.header = h
 			#all time assignments (overwriting ROS time)
 			# Comment the two lines below if you need ROS time
-			baro_msg.header.stamp.secs = secs
-			baro_msg.header.stamp.nsecs = nsecs	
+			# baro_msg.header.stamp.secs = secs
+			# baro_msg.header.stamp.nsecs = nsecs	
 			self.gnssPvt_pub.publish(gnssPvt_msg)										
 		if pub_ori:
 			ori_msg.header = h
 			#all time assignments (overwriting ROS time)
 			# Comment the two lines below if you need ROS time
-			ori_msg.header.stamp.secs = secs
-			ori_msg.header.stamp.nsecs = nsecs	
+			# ori_msg.header.stamp.secs = secs
+			# ori_msg.header.stamp.nsecs = nsecs	
 			self.ori_pub.publish(ori_msg)
 		if pub_vel:
 			vel_msg.header = h
 			#all time assignments (overwriting ROS time)
 			# Comment the two lines below if you need ROS time
-			vel_msg.header.stamp.secs = secs
-			vel_msg.header.stamp.nsecs = nsecs	
+			# vel_msg.header.stamp.secs = secs
+			# vel_msg.header.stamp.nsecs = nsecs	
 			self.vel_pub.publish(vel_msg)
 		if pub_pos:
 			pos_msg.header = h
 			#all time assignments (overwriting ROS time)
 			# Comment the two lines below if you need ROS time
-			pos_msg.header.stamp.secs = secs
-			pos_msg.header.stamp.nsecs = nsecs	
+			# pos_msg.header.stamp.secs = secs
+			# pos_msg.header.stamp.nsecs = nsecs	
 			self.pos_pub.publish(pos_msg)		
 			
 
