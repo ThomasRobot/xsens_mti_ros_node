@@ -138,17 +138,24 @@ class XSensDriver(object):
 
 		# get data (None if not present)
 		#temp = data.get('Temp')	# float
-		orient_data = data.get('Orientation Data')
-		velocity_data = data.get('Velocity')
-		position_data = data.get('Latlon')
-		altitude_data = data.get('Altitude')
+		# orient_data = data.get('Orientation Data')
+		orient_data = None
+		# velocity_data = data.get('Velocity')
+		velocity_data = None
+		# position_data = data.get('Latlon')
+		position_data = None
+		# altitude_data = data.get('Altitude')
+		altitude_data = None
 		acc_data = data.get('Acceleration')
 		gyr_data = data.get('Angular Velocity')
 		mag_data = data.get('Magnetic')
-		pressure_data = data.get('Pressure')
+		# pressure_data = data.get('Pressure')
+		pressure_data = None
 		time_data = data.get('Timestamp')
-		gnss_data = data.get('Gnss PVT')
-		status = data.get('Status')	# int
+		# gnss_data = data.get('Gnss PVT')
+		gnss_data = None
+		# status = data.get('Status')	# int
+		status = None
 
 		# create messages and default values
 		"PacketCounter message"

@@ -554,9 +554,15 @@ class MTDevice(object):
 		mid, data = self.read_msg()
 		if mid==MID.MTData2:
 			return self.parse_MTData2(data)
+		elif mid==MID.Error:
+			rospy.logerr("MT error")
+			print data[0]
+			print MID.ErrorCodes
+			# rospy.logerr("MT error 0x%02X: %s."%(data[0],
+			# 			MID.ErrorCodes[data[0]]))
 		else:
-			# raise MTException("Only MTData2 supported, use -f and -m to configure MTi.\n unknown data message: mid=0x%02X (%s)."%	(mid, getMIDName(mid)))
-			rospy.logwarn("Only MTData2 supported, use -f and -m to configure MTi.\n unknown data message: mid=0x%02X (%s)."%	(mid, getMIDName(mid)))
+			raise MTException("Only MTData2 supported, use -f and -m to configure MTi.\n unknown data message: mid=0x%02X (%s)."%	(mid, getMIDName(mid)))
+			# rospy.logwarn("Only MTData2 supported, use -f and -m to configure MTi.\n unknown data message: mid=0x%02X (%s)."%	(mid, getMIDName(mid)))
 
 	## Parse a new MTData2 message
 	def parse_MTData2(self, data):
